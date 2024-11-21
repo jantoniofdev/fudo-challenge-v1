@@ -1,0 +1,380 @@
+openapi: 3.0.3
+info:
+  title: API de FudoApp
+  description: API para autenticación de usuarios y gestión de productos.
+  version: "1.0.0"
+
+servers:
+  - url: http://localhost:9292
+    description: Servidor local
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Producto A"
+
+    ProductInput:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "product 1"
+
+paths:
+openapi: 3.0.0
+info:
+  title: API de Registro
+  description: API para registrar nuevos usuarios.
+  version: 1.0.0
+paths:
+  /register:
+    post:
+      summary: Registro de un nuevo usuario
+      description: Endpoint para registrar un nuevo usuario con un nombre de usuario y contraseña.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Nombre de usuario del nuevo registro.
+                password:
+                  type: string
+                  description: Contraseña del nuevo usuario.
+              required:
+                - username
+                - password
+      responses:
+        '200':
+          description: Registro exitoso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Usuario registrado exitosamente"
+        '400':
+          description: Solicitud incorrecta, datos faltantes o incorrectos.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Faltan campos requeridos"
+
+  /login:
+    post:
+      summary: Iniciar sesión
+      description: Autentica al usuario y devuelve un token de sesión.
+      tags:
+        - Autenticación
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "admin1"
+                password:
+                  type: string
+                  format: password
+                  example: "admin1"
+      responses:
+        '200':
+          description: Inicio de sesión exitoso
+          headers:
+            Authorization:
+              description: JWT token
+              schema:
+                type: string
+                example: "eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoyfQ.sQZW1LSaHUstXU6e5xOrJrIyFeN9nrfWkx__QVWe-2M"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Logged In Success!"
+        '401':
+          description: Credenciales incorrectas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Invalid credentials"
+        '401'
+          description: Usuario no encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "User not found"
+
+  /products:
+    get:
+      summary: Obtener lista de productos
+      description: Devuelve una lista de productos disponibles. Requiere autenticación JWT.
+      tags:
+        - Productos
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de productos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '401':
+          description: No autorizado - Token inválido o faltante
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Token no válido o faltante"
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Error interno del servidor"
+    components:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+
+    post:
+      summary: Crear nuevos productos
+      description: Endpoint para crear productos. Requiere autenticación mediante token JWT.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                products:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Nombre del producto.
+              required:
+                - products
+      responses:
+        '201':
+          description: Producto(s) creado(s) exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Agregando Productos..."
+                  created_products:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID del producto creado.
+                        name:
+                          type: string
+                          description: Nombre del producto creado.
+                    example:
+                      - id: 1
+                        name: "product 1"
+        '400':
+          description: Solicitud incorrecta, datos faltantes o incorrectos.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Faltan campos requeridos o formato incorrecto"
+        '401':
+          description: No autorizado, token de autenticación inválido o faltante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Token de autorización inválido"
+        '500':
+          description: Error en el servidor.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Error interno del servidor"
+    components:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
+
+  /users:
+    get:
+      summary: Obtener lista de usuarios
+      description: Endpoint para obtener una lista de usuarios autenticados mediante JWT.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios obtenida con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user_id:
+                      type: integer
+                      description: ID del usuario.
+                    username:
+                      type: string
+                      description: Nombre de usuario.
+                example:
+                  - user_id: 1
+                    username: "yolcar"
+                  - user_id: 2
+                    username: "jdoe"
+
+        '401':
+          description: No autorizado, token de autenticación inválido o faltante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Token de autorización inválido"
+
+  /product_status:
+    get:
+      summary: Obtener el estado de un producto
+      description: Endpoint para obtener el estado de un producto usando su ID como parámetro de consulta. Requiere autenticación mediante JWT.
+      parameters:
+        - name: id
+          in: query
+          description: ID del producto cuyo estado se desea consultar.
+          required: true
+          schema:
+            type: integer
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Estado del producto obtenido con éxito.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  product_id:
+                    type: integer
+                    description: ID del producto.
+                  status:
+                    type: string
+                    description: Estado actual del producto.
+                example:
+                  product_id: 1
+                  status: "Disponible"
+        '400':
+          description: Solicitud incorrecta, parámetros inválidos o faltantes.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Falta el parámetro 'id' o el formato es incorrecto"
+        '401':
+          description: No autorizado, token de autenticación inválido o faltante.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Token de autorización inválido"
+        '404':
+          description: Producto no encontrado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Producto con no encontrado"
+    components:
+      securitySchemes:
+        bearerAuth:
+          type: http
+          scheme: bearer
+          bearerFormat: JWT
