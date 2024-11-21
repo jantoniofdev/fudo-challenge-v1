@@ -1,0 +1,1 @@
+Es un estándar de comunicación que permite la transmisión de datos entre dispositivos y programas a través de una red.
